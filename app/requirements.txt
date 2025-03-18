@@ -1,8 +1,0 @@
-fastapi==0.115.11
-psycopg2-binary==2.9.10
-sqlalchemy==2.0.39
-uvicorn==0.34.0
-scikit-surprise==1.1.4
-pandas==2.2.3
-loguru==0.7.3
-numpy<2
