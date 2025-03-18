@@ -15,7 +15,7 @@ RUN pip install  -r requirements.txt
 RUN mkdir -p /app/logs
 
 # Copy application code
-COPY . ./app
+COPY . .
 
 # Set up environment variables
 ENV PYTHONUNBUFFERED=1
