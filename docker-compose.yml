@@ -26,7 +26,7 @@ services:
     ports:
       - "8000:8000"  # Expose API port
     volumes:
-      - ./backend/app:/app  # For development hot-reload
+      - ./backend:/app  # For development hot-reload
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
