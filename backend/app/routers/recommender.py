@@ -12,6 +12,9 @@ router = APIRouter()
 
 @router.post("/train", response_model=TrainResponse)
 def train():
+    """
+    Entraîner le modèle de recommandation
+    """
     return train_model()
 
 @router.get("/recommend/{user_id}", response_model=RecommendResponse)
