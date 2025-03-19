@@ -13,4 +13,5 @@ COPY init/ /app/init/
 WORKDIR /app/init
 
 # Run import script
-CMD ["python", "import_data.py"]
+# CMD ["python", "import_data.py"]
+CMD ["bin/bash"]

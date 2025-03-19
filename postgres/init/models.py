@@ -12,3 +12,14 @@ class Movie(Base):
     
     def __repr__(self):
         return f"<Movie(movie_id={self.movie_id}, title='{self.title}')>"
+
+class Rating(Base):
+    __tablename__ = 'ratings'
+    
+    user_id = Column(Integer, primary_key=True)
+    movie_id = Column(Integer, ForeignKey('movies.movie_id'), primary_key=True)
+    rating = Column(Float, nullable=False)
+    timestamp = Column(BigInteger)
+    
+    def __repr__(self):
+        return f"<Rating(user_id={self.user_id}, movie_id={self.movie_id}, rating={self.rating})>"
