@@ -1,198 +1,120 @@
-#!/usr/bin/env python3
-import os
-import sys
-import pandas as pd
-from sqlalchemy import create_engine, text
-from sqlalchemy.exc import OperationalError
-from loguru import logger
+#!/usr/bin/env python3  # Spécifie l'interpréteur Python à utiliser
+import os  # Module pour interagir avec le système d'exploitation
+import sys  # Module pour interagir avec le système Python
+import pandas as pd  # Bibliothèque pour la manipulation de données
+from sqlalchemy import create_engine, text  # Outils pour interagir avec une base de données SQL
+from sqlalchemy.exc import OperationalError  # Exception pour les erreurs de connexion SQLAlchemy
+from loguru import logger  # Bibliothèque pour la journalisation avancée
 
 # Import SQLAlchemy models
-from models import Base, Movie, Rating
+from models import Base, Movie, Rating  # Importation des modèles SQLAlchemy définis
 
 # Configure logger
-logger.remove()
-logger.add(sys.stderr, level="INFO")
+logger.remove()  # Supprime les configurations de journalisation par défaut
+logger.add(sys.stderr, level="INFO")  # Ajoute une sortie de journalisation sur stderr avec le niveau INFO
 
 def get_db_engine():
     """
     Crée et retourne un moteur SQLAlchemy pour la connexion à PostgreSQL.
-    
-    Étapes:
-    1. Récupère les informations de connexion depuis les variables d'environnement
-    2. Construit l'URL de connexion à la base de données PostgreSQL
-    3. Crée et retourne un objet Engine SQLAlchemy
-    
-    Retourne:
-        Un objet Engine SQLAlchemy configuré pour la connexion à PostgreSQL
     """
-    user = os.environ.get("POSTGRES_USER", "postgres")
-    password = os.environ.get("POSTGRES_PASSWORD", "postgres")
-    host = "postgres"  # Docker service name
-    port = os.environ.get("POSTGRES_PORT", "5432")
-    database = os.environ.get("POSTGRES_DB", "movies")
-    
+    user = os.environ.get("POSTGRES_USER", "postgres")  # Récupère l'utilisateur PostgreSQL depuis les variables d'environnement
+    password = os.environ.get("POSTGRES_PASSWORD", "postgres")  # Récupère le mot de passe PostgreSQL
+    host = "postgres"  # Nom du service Docker pour PostgreSQL
+    port = os.environ.get("POSTGRES_PORT", "5432")  # Récupère le port PostgreSQL
+    database = os.environ.get("POSTGRES_DB", "movies")  # Récupère le nom de la base de données
+
+    # Construit l'URL de connexion à PostgreSQL
     db_url = f"postgresql://{user}:{password}@{host}:{port}/{database}"
     
-    return create_engine(db_url)
+    return create_engine(db_url)  # Retourne un moteur SQLAlchemy
 
 def create_db_schema(engine):
     """
     Crée le schéma de la base de données à partir des modèles SQLAlchemy définis.
-    
-    Étapes:
-    1. Utilise Base.metadata.create_all pour créer toutes les tables
-    2. Crée les tables 'movies' et 'ratings' selon les modèles Movie et Rating
-    3. Établit les contraintes de clé primaire et de clé étrangère
-    
-    Args:
-        engine: L'objet Engine SQLAlchemy pour la connexion à la base de données
-        
-    Raises:
-        Exception: Si la création du schéma échoue, l'erreur est journalisée et propagée
     """
-
     try:
-        logger.info("Creating database schema...")
-        Base.metadata.create_all(engine)
-        logger.success("Database schema created successfully")
-    except Exception:
-        logger.exception("Error creating database schema")
-        raise
+        logger.info("Creating database schema...")  # Journalise le début de la création du schéma
+        Base.metadata.create_all(engine)  # Crée toutes les tables définies dans les modèles SQLAlchemy
+        logger.success("Database schema created successfully")  # Journalise le succès de la création
+    except Exception:  # Capture toute exception
+        logger.exception("Error creating database schema")  # Journalise l'erreur
+        raise  # Relance l'exception
 
 def import_data_with_pandas(engine, file_path, table_name, chunksize):
     """
     Importe les données d'un fichier CSV dans une table PostgreSQL en utilisant pandas.
-    
-    Étapes:
-    1. Charge le fichier CSV spécifié dans un DataFrame pandas
-    2. Vérifie la présence des colonnes requises selon le modèle correspondant
-    3. Effectue les mappages nécessaires des noms de colonnes si besoin
-    4. Sélectionne uniquement les colonnes correspondant au modèle
-    5. Insère les données par lots dans la table cible
-    
-    Args:
-        engine: L'objet Engine SQLAlchemy pour la connexion à la base de données
-        file_path: Chemin vers le fichier CSV à importer
-        table_name: Nom de la table de destination ('movies' ou 'ratings')
-        chunksize: Nombre d'enregistrements à insérer par lot
-        
-    Returns:
-        int: Le nombre total d'enregistrements importés
-        
-    Raises:
-        Exception: Si l'importation échoue, l'erreur est journalisée et propagée
-        ValueError: Si des colonnes requises sont manquantes dans le CSV
     """
     try:
-        logger.info(f"Importing data from {file_path} into {table_name} table")
-        df = pd.read_csv(file_path)
-        logger.info(f"Found {len(df)} records in CSV file")
+        logger.info(f"Importing data from {file_path} into {table_name} table")  # Journalise le début de l'importation
+        df = pd.read_csv(file_path)  # Charge le fichier CSV dans un DataFrame pandas
+        logger.info(f"Found {len(df)} records in CSV file")  # Journalise le nombre d'enregistrements trouvés
         
-        # Import data with pandas
+        # Insère les données dans la table cible par lots
         df.to_sql(
-            table_name, 
-            engine, 
-            if_exists='append', 
-            index=False, 
-            chunksize=chunksize,
-            method='multi'
+            table_name,  # Nom de la table cible
+            engine,  # Moteur SQLAlchemy pour la connexion
+            if_exists='append',  # Ajoute les données à la table existante
+            index=False,  # N'insère pas l'index du DataFrame
+            chunksize=chunksize,  # Nombre d'enregistrements par lot
+            method='multi'  # Utilise une méthode d'insertion optimisée
         )
-        logger.success(f"Imported {len(df)} records into {table_name} table")
-        return len(df)
-    except Exception:
-        logger.exception(f"Error importing data from {file_path} to {table_name}")
-        raise
+        logger.success(f"Imported {len(df)} records into {table_name} table")  # Journalise le succès de l'importation
+        return len(df)  # Retourne le nombre total d'enregistrements importés
+    except Exception:  # Capture toute exception
+        logger.exception(f"Error importing data from {file_path} to {table_name}")  # Journalise l'erreur
+        raise  # Relance l'exception
 
 def create_indexes(engine):
     """
     Crée des index sur les tables pour améliorer les performances des requêtes.
-    
-    Étapes:
-    1. Établit une connexion à la base de données
-    2. Crée un index sur la colonne user_id de la table ratings
-    3. Crée un index sur la colonne movie_id de la table ratings
-    4. Utilise CREATE INDEX IF NOT EXISTS pour éviter les erreurs si les index existent déjà
-    
-    Args:
-        engine: L'objet Engine SQLAlchemy pour la connexion à la base de données
-        
-    Raises:
-        Exception: Si la création des index échoue, l'erreur est journalisée et propagée
     """
     try:
-        logger.info("Creating database indexes...")
+        logger.info("Creating database indexes...")  # Journalise le début de la création des index
         
-        with engine.connect() as connection:
-            # Create index on user_id in ratings
+        with engine.connect() as connection:  # Établit une connexion à la base de données
+            # Crée un index sur la colonne user_id de la table ratings
             connection.execute(text(
                 "CREATE INDEX IF NOT EXISTS idx_ratings_user ON ratings(user_id)"
             ))
             
-            # Create index on movie_id in ratings
+            # Crée un index sur la colonne movie_id de la table ratings
             connection.execute(text(
                 "CREATE INDEX IF NOT EXISTS idx_ratings_movie ON ratings(movie_id)"
             ))
             
-        logger.success("Database indexes created successfully")
-    except Exception:
-        logger.exception("Error creating database indexes")
-        raise
+        logger.success("Database indexes created successfully")  # Journalise le succès de la création des index
+    except Exception:  # Capture toute exception
+        logger.exception("Error creating database indexes")  # Journalise l'erreur
+        raise  # Relance l'exception
 
 def main():
     """
     Fonction principale qui orchestre le processus complet d'importation des données.
-    
-    Étapes:
-    1. Définit les chemins vers les fichiers CSV de films et d'évaluations
-    2. Établit une connexion à la base de données PostgreSQL
-    3. Teste la connexion avec une requête simple
-    4. Crée le schéma de la base de données selon les modèles définis
-    5. Importe les données des films depuis le CSV vers la table 'movies'
-    6. Importe les données d'évaluations depuis le CSV vers la table 'ratings'
-    7. Crée des index sur les colonnes pertinentes pour optimiser les performances
-    
-    Le processus s'arrête avec un code d'erreur si une étape échoue,
-    avec journalisation des détails de l'erreur.
-    
-    Raises:
-        OperationalError: Si la connexion à la base de données échoue
-        Exception: Pour toute autre erreur durant le processus d'importation
     """
     try:
-        # Define file paths directly
-        data_dir = "/data"
-        movies_path = os.path.join(data_dir, "movies_metadata.csv")
-        ratings_path = os.path.join(data_dir, "ratings.csv")
+        data_dir = "/data"  # Répertoire contenant les fichiers CSV
+        movies_path = os.path.join(data_dir, "movies_metadata.csv")  # Chemin vers le fichier des films
+        ratings_path = os.path.join(data_dir, "ratings.csv")  # Chemin vers le fichier des évaluations
         
-        # Create database connection
-        logger.info("Connecting to PostgreSQL database...")
+        logger.info("Connecting to PostgreSQL database...")  # Journalise le début de la connexion
         try:
-            engine = get_db_engine()
-            # Test connection
-            with engine.connect() as connection:
-                connection.execute(text("SELECT 1")).fetchone()
-            logger.info("Successfully connected to PostgreSQL")
-        except OperationalError:
-            logger.exception("Failed to connect to PostgreSQL")
-            sys.exit(1)
+            engine = get_db_engine()  # Crée le moteur de connexion à la base de données
+            with engine.connect() as connection:  # Teste la connexion
+                connection.execute(text("SELECT 1")).fetchone()  # Exécute une requête simple
+            logger.info("Successfully connected to PostgreSQL")  # Journalise le succès de la connexion
+        except OperationalError:  # Capture les erreurs de connexion
+            logger.exception("Failed to connect to PostgreSQL")  # Journalise l'erreur
+            sys.exit(1)  # Quitte le programme avec un code d'erreur
         
-        # Create database schema
-        create_db_schema(engine)
+        create_db_schema(engine)  # Crée le schéma de la base de données
+        import_data_with_pandas(engine, movies_path, 'movies', chunksize=1000)  # Importe les données des films
+        import_data_with_pandas(engine, ratings_path, 'ratings', chunksize=5000)  # Importe les données des évaluations
+        create_indexes(engine)  # Crée les index
         
-        # Import movies data
-        import_data_with_pandas(engine, movies_path, 'movies', chunksize=1000)
-        
-        # Import ratings data
-        import_data_with_pandas(engine, ratings_path, 'ratings', chunksize=5000)
-        
-        # Create indexes
-        create_indexes(engine)
-        
-        logger.success("Data import completed successfully")
-        
-    except Exception:
-        logger.exception("Error in data import process")
-        sys.exit(1)
+        logger.success("Data import completed successfully")  # Journalise le succès du processus
+    except Exception:  # Capture toute exception
+        logger.exception("Error in data import process")  # Journalise l'erreur
+        sys.exit(1)  # Quitte le programme avec un code d'erreur
 
-if __name__ == "__main__":
-    main()
+if __name__ == "__main__":  # Point d'entrée du script
+    main()  # Appelle la fonction principale
