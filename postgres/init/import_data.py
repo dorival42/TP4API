@@ -17,12 +17,15 @@ def get_db_engine():
     """
     Crée et retourne un moteur SQLAlchemy pour la connexion à PostgreSQL.
     """
+    # Pour les variables d'environnement, la methode os.environ.get("NOM_VARIABLE", "valeur_par_defaut") permet de récupérer la valeur de la variable d'environnement
+    # le premier argument est le nom de la variable d'environnement et le deuxième argument est la valeur par défaut si la variable n'est pas définie
     user = os.environ.get("POSTGRES_USER", "postgres")  # Récupère l'utilisateur PostgreSQL depuis les variables d'environnement
     password = os.environ.get("POSTGRES_PASSWORD", "postgres")  # Récupère le mot de passe PostgreSQL
     ## Si on requette depuis un container docker le host est le nom du service docker (défini dans le docker-compose.yml)
-    ## Mais si on voudrait se connecter depuis l'ordinateur on doit utiliser localhost donc pour tester le script changer cette ligne par host = "localhost"
-    # host = "postgres"  # Nom du service Docker pour PostgreSQL
-    host = "localhost"  # host base de données en dehors du container
+    # donc ici on récupère la valeur de la variable d'environnement POSTGRES_HOST, si elle n'est pas définie on utilise localhost
+    # autremement dit on utilise localhost si on ne requette pas depuis un container docker nommé data-importer dans le docker-compose.yml
+    host = os.environ.get("POSTGRES_HOST", "localhost")  # Nom du service Docker pour PostgreSQL
+    # host = "localhost"  # host base de données en dehors du container
     port = os.environ.get("POSTGRES_PORT", "5432")  # Récupère le port PostgreSQL
     database = os.environ.get("POSTGRES_DB", "moviesdb")  # Récupère le nom de la base de données
 
@@ -95,7 +98,7 @@ def main():
     Fonction principale qui orchestre le processus complet d'importation des données.
     """
     try:
-        data_dir = "/home/alinux/projects/m2/tp4/data"  # Répertoire contenant les fichiers CSV
+        data_dir = "/data"  # Répertoire contenant les fichiers CSV
         movies_path = os.path.join(data_dir, "movies_metadata.csv")  # Chemin vers le fichier des films
         ratings_path = os.path.join(data_dir, "ratings.csv")  # Chemin vers le fichier des évaluations
         

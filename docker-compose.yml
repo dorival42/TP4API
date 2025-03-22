@@ -33,12 +33,28 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=moviesdb
-
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/"]
       interval: 30s
       timeout: 10s
       retries: 3
+
+  data-importer:
+    build:
+      context: ./postgres
+      dockerfile: Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy  # Attend que le service PostgreSQL soit prêt
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: moviesdb
+    volumes:
+      - ./data:/data  # Monte le répertoire contenant les fichiers CSV
+      - ./postgres/init:/app/init  # Monte le répertoire contenant le script d'importation
 
 volumes:
   postgres_data:

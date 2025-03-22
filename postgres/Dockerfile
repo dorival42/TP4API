@@ -4,7 +4,7 @@ WORKDIR /app
 
 # Copy requirements and install dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt
 
 # Copy import script and models
 COPY init/ /app/init/
@@ -13,5 +13,4 @@ COPY init/ /app/init/
 WORKDIR /app/init
 
 # Run import script
-# CMD ["python", "import_data.py"]
-CMD ["bin/bash"]
+CMD ["python", "import_data.py"]
