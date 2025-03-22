@@ -1,10 +1,10 @@
 #!/usr/bin/env python3  # Spécifie l'interpréteur Python à utiliser
-import os  # Module pour interagir avec le système d'exploitation
-import sys  # Module pour interagir avec le système Python
-import pandas as pd  # Bibliothèque pour la manipulation de données
+import os  
+import sys 
+import pandas as pd  
 from sqlalchemy import create_engine, text  # Outils pour interagir avec une base de données SQL
 from sqlalchemy.exc import OperationalError  # Exception pour les erreurs de connexion SQLAlchemy
-from loguru import logger  # Bibliothèque pour la journalisation avancée
+from loguru import logger  
 
 # Import SQLAlchemy models
 from models import Base, Movie, Rating  # Importation des modèles SQLAlchemy définis
@@ -19,9 +19,12 @@ def get_db_engine():
     """
     user = os.environ.get("POSTGRES_USER", "postgres")  # Récupère l'utilisateur PostgreSQL depuis les variables d'environnement
     password = os.environ.get("POSTGRES_PASSWORD", "postgres")  # Récupère le mot de passe PostgreSQL
-    host = "postgres"  # Nom du service Docker pour PostgreSQL
+    ## Si on requette depuis un container docker le host est le nom du service docker (défini dans le docker-compose.yml)
+    ## Mais si on voudrait se connecter depuis l'ordinateur on doit utiliser localhost donc pour tester le script changer cette ligne par host = "localhost"
+    # host = "postgres"  # Nom du service Docker pour PostgreSQL
+    host = "localhost"  # host base de données en dehors du container
     port = os.environ.get("POSTGRES_PORT", "5432")  # Récupère le port PostgreSQL
-    database = os.environ.get("POSTGRES_DB", "movies")  # Récupère le nom de la base de données
+    database = os.environ.get("POSTGRES_DB", "moviesdb")  # Récupère le nom de la base de données
 
     # Construit l'URL de connexion à PostgreSQL
     db_url = f"postgresql://{user}:{password}@{host}:{port}/{database}"
@@ -92,7 +95,7 @@ def main():
     Fonction principale qui orchestre le processus complet d'importation des données.
     """
     try:
-        data_dir = "/data"  # Répertoire contenant les fichiers CSV
+        data_dir = "/home/alinux/projects/m2/tp4/data"  # Répertoire contenant les fichiers CSV
         movies_path = os.path.join(data_dir, "movies_metadata.csv")  # Chemin vers le fichier des films
         ratings_path = os.path.join(data_dir, "ratings.csv")  # Chemin vers le fichier des évaluations
         
