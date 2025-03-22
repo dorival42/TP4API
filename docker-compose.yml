@@ -1,60 +1,59 @@
-version: '3.8'
 
-services:
-  postgres:
-    image: postgres:17
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: moviesdb
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./data:/data  # For CSV files
-    ports:
-      - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
+services:  # Définition des services qui seront orchestrés par Docker Compose
+  postgres:  # Service pour la base de données PostgreSQL
+    image: postgres:17  # Utilise l'image officielle PostgreSQL version 17
+    environment:  # Définit les variables d'environnement nécessaires pour configurer PostgreSQL
+      POSTGRES_USER: postgres  # Nom d'utilisateur pour se connecter à PostgreSQL
+      POSTGRES_PASSWORD: postgres  # Mot de passe pour l'utilisateur PostgreSQL
+      POSTGRES_DB: moviesdb  # Nom de la base de données à créer automatiquement au démarrage
+    volumes:  # Monte des volumes pour persister les données et partager des fichiers
+      - postgres_data:/var/lib/postgresql/data  # Volume pour stocker les données de la base de données
+      - ./data:/data  # Monte le répertoire local `./data` dans le conteneur pour accéder aux fichiers CSV
+    ports:  # Expose le port PostgreSQL pour permettre les connexions externes
+      - "5432:5432"  # Mappe le port 5432 du conteneur au port 5432 de l'hôte
+    healthcheck:  # Configure une vérification de l'état de santé pour PostgreSQL
+      test: ["CMD-SHELL", "pg_isready -U postgres"]  # Commande pour vérifier si PostgreSQL est prêt
+      interval: 10s  # Intervalle entre chaque vérification
+      timeout: 5s  # Délai avant qu'une vérification échoue
+      retries: 5  # Nombre de tentatives avant de considérer le service comme non sain
+      start_period: 10s  # Temps d'attente avant de commencer les vérifications après le démarrage
 
-  api:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    ports:
-      - "8000:8000"  # Expose API port
-    volumes:
-      - ./backend:/app  # For development hot-reload
-    environment:
-      - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=5432
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=moviesdb
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+  api:  # Service pour l'API backend
+    build:  # Spécifie les instructions pour construire l'image Docker de l'API
+      context: ./backend  # Chemin vers le répertoire contenant le code source de l'API
+      dockerfile: Dockerfile  # Nom du fichier Dockerfile utilisé pour construire l'image
+    ports:  # Expose le port de l'API pour les connexions externes
+      - "8000:8000"  # Mappe le port 8000 du conteneur au port 8000 de l'hôte
+    volumes:  # Monte des volumes pour permettre le développement avec hot-reload
+      - ./backend:/app  # Monte le répertoire local `./backend` dans le conteneur
+    environment:  # Définit les variables d'environnement nécessaires pour que l'API se connecte à PostgreSQL
+      POSTGRES_HOST: postgres  # Nom du service PostgreSQL (résolu automatiquement par Docker Compose)
+      POSTGRES_PORT: 5432  # Port utilisé pour se connecter à PostgreSQL
+      POSTGRES_USER: postgres  # Nom d'utilisateur pour se connecter à PostgreSQL
+      POSTGRES_PASSWORD: postgres  # Mot de passe pour l'utilisateur PostgreSQL
+      POSTGRES_DB: moviesdb  # Nom de la base de données à utiliser
+    healthcheck:  # Configure une vérification de l'état de santé pour l'API
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]  # Vérifie si l'API répond sur le port 8000
+      interval: 30s  # Intervalle entre chaque vérification
+      timeout: 10s  # Délai avant qu'une vérification échoue
+      retries: 3  # Nombre de tentatives avant de considérer le service comme non sain
 
-  data-importer:
-    build:
-      context: ./postgres
-      dockerfile: Dockerfile
-    depends_on:
+  data-importer:  # Service pour importer les données dans la base de données
+    build:  # Spécifie les instructions pour construire l'image Docker du script d'importation
+      context: ./postgres  # Chemin vers le répertoire contenant le script d'importation et le Dockerfile
+      dockerfile: Dockerfile  # Nom du fichier Dockerfile utilisé pour construire l'image
+    depends_on:  # Spécifie que ce service dépend du service PostgreSQL
       postgres:
-        condition: service_healthy  # Attend que le service PostgreSQL soit prêt
-    environment:
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: moviesdb
-    volumes:
-      - ./data:/data  # Monte le répertoire contenant les fichiers CSV
-      - ./postgres/init:/app/init  # Monte le répertoire contenant le script d'importation
+        condition: service_healthy  # Attend que le service PostgreSQL soit sain avant de démarrer
+    environment:  # Définit les variables d'environnement nécessaires pour que le script se connecte à PostgreSQL
+      POSTGRES_HOST: postgres  # Nom du service PostgreSQL (résolu automatiquement par Docker Compose)
+      POSTGRES_PORT: 5432  # Port utilisé pour se connecter à PostgreSQL
+      POSTGRES_USER: postgres  # Nom d'utilisateur pour se connecter à PostgreSQL
+      POSTGRES_PASSWORD: postgres  # Mot de passe pour l'utilisateur PostgreSQL
+      POSTGRES_DB: moviesdb  # Nom de la base de données à utiliser
+    volumes:  # Monte des volumes pour accéder aux fichiers nécessaires
+      - ./data:/data  # Monte le répertoire local `./data` dans le conteneur pour accéder aux fichiers CSV
+      - ./postgres/init:/app/init  # Monte le répertoire contenant le script d'importation dans le conteneur
 
-volumes:
-  postgres_data:
+volumes:  # Définition des volumes Docker pour persister les données
+  postgres_data:  # Volume nommé pour stocker les données de PostgreSQL
