@@ -1,5 +1,5 @@
 **TP : Comprendre et Modifier les Routes dans une API FastAPI et Remplacer une Lecture Fichier par une Lecture depuis une Base de Données**
-
+**Réponse au question Par Pierre Chrislin DORIVAL**
 ---
 
 ### 1. **Objectifs Pédagogiques :**  
@@ -57,6 +57,41 @@ Vous concentrerez vos efforts sur :
 docker-compose up -d
 ```
 2. Expliquez comment l'application ce lancer. Regardez le Dockerfile à l'intérieur du dossier app. Quelle commande il execute ?  
+**Réponse:
+Ce Dockerfile permet de construire une image Docker qui exécute un script Python à l'intérieur d'un conteneur.
+
+### 1. **FROM python:3.11-slim**
+   - Cela spécifie l'image de base utilisée pour le conteneur. Ici, il s'agit d'une version **minimale** de Python 3.11, ce qui signifie qu'elle contient une installation de Python avec une taille réduite.
+
+### 2. **WORKDIR /app**
+   - Cette commande définit le répertoire de travail où les commandes suivantes seront exécutées. Ici, tous les fichiers copiés ou générés dans le conteneur seront placés dans le répertoire `/app`. Si ce répertoire n'existe pas, Docker le crée automatiquement.
+
+### 3. **COPY requirements.txt .**
+   - Cette commande copie le fichier `requirements.txt` depuis ton répertoire local vers le répertoire de travail actuel dans le conteneur (`/app`). Ce fichier contient les dépendances Python nécessaires pour l'application.
+
+### 4. **RUN pip install -r requirements.txt**
+   - Cette commande exécute `pip` pour installer les dépendances listées dans `requirements.txt`. Cela permet d'installer toutes les bibliothèques Python nécessaires à l'application dans le conteneur.
+
+### 5. **COPY init/ /app/init/**
+   - Cette commande copie tout le contenu du répertoire `init/` de ton répertoire local vers le répertoire `/app/init/` dans le conteneur. Ce répertoire devrait contenir des scripts, y compris `import_data.py`, qui sera exécuté ensuite.
+
+### 6. **WORKDIR /app/init**
+   - Cette commande change le répertoire de travail à `/app/init`, c'est-à-dire dans le dossier où se trouve ton script `import_data.py`.
+
+### 7. **CMD ["python", "import_data.py"]**
+   - Enfin, cette commande définit la commande par défaut à exécuter lorsque le conteneur démarre. Ici, elle lance le script Python `import_data.py` à l'aide de la commande `python` à l'intérieur du conteneur.
+
+
+Pour exécuter cette application dans Docker, il suffit de **construire** et **lancer** l'image Docker en utilisant les commandes suivantes :
+
+```bash
+docker build -t myapp .  # Construire l'image
+docker run myapp         # Lancer le conteneur
+```
+
+Cela démarrera le conteneur et exécutera le script `import_data.py` à l'intérieur de celui-ci.
+
+
 
 #### Étape 2 : **Comprendre les routes existantes**  
 - Identifiez les routes déjà implémentées et testez-les avec Swagger UI (la route /docs).  
