@@ -85,8 +85,8 @@ Ce Dockerfile permet de construire une image Docker qui exécute un script Pytho
 Pour exécuter cette application dans Docker, il suffit de **construire** et **lancer** l'image Docker en utilisant les commandes suivantes :
 
 ```bash
-docker build -t myapp .  # Construire l'image
-docker run myapp         # Lancer le conteneur
+docker build -t postgres .  # Construire l'image
+docker run postgres        # Lancer le conteneur
 ```
 
 Cela démarrera le conteneur et exécutera le script `import_data.py` à l'intérieur de celui-ci.
