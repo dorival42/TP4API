@@ -57,7 +57,7 @@ Vous concentrerez vos efforts sur :
 docker-compose up -d
 ```
 2. Expliquez comment l'application ce lancer. Regardez le Dockerfile à l'intérieur du dossier app. Quelle commande il execute ?  
-**Réponse:
+**Réponse:**
 Ce Dockerfile permet de construire une image Docker qui exécute un script Python à l'intérieur d'un conteneur.
 
 ### 1. **FROM python:3.11-slim**
